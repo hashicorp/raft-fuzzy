@@ -167,7 +167,7 @@ func (t *transport) sendRPC(target string, req interface{}, resp interface{}) er
 }
 
 // AppendEntries sends the appropriate RPC to the target node.
-func (t *transport) AppendEntries(target raft.ServerAddress, args *raft.AppendEntriesRequest, resp *raft.AppendEntriesResponse) error {
+func (t *transport) AppendEntries(id raft.ServerID, target raft.ServerAddress, args *raft.AppendEntriesRequest, resp *raft.AppendEntriesResponse) error {
 	ae := appendEntries{
 		source:      t.node,
 		target:      target,
@@ -207,19 +207,19 @@ func lastIndex(a *raft.AppendEntriesRequest) uint64 {
 }
 
 // RequestVote sends the appropriate RPC to the target node.
-func (t *transport) RequestVote(target raft.ServerAddress, args *raft.RequestVoteRequest, resp *raft.RequestVoteResponse) error {
+func (t *transport) RequestVote(id raft.ServerID, target raft.ServerAddress, args *raft.RequestVoteRequest, resp *raft.RequestVoteResponse) error {
 	return t.sendRPC(string(target), args, resp)
 }
 
 // InstallSnapshot is used to push a snapshot down to a follower. The data is read from
 // the ReadCloser and streamed to the client.
-func (t *transport) InstallSnapshot(target raft.ServerAddress, args *raft.InstallSnapshotRequest, resp *raft.InstallSnapshotResponse, data io.Reader) error {
+func (t *transport) InstallSnapshot(id raft.ServerID, target raft.ServerAddress, args *raft.InstallSnapshotRequest, resp *raft.InstallSnapshotResponse, data io.Reader) error {
 	t.log.Printf("INSTALL SNAPSHOT *************************************")
 	return errors.New("huh")
 }
 
 // EncodePeer is used to serialize a peer name.
-func (t *transport) EncodePeer(p raft.ServerAddress) []byte {
+func (t *transport) EncodePeer(id raft.ServerID, p raft.ServerAddress) []byte {
 	return []byte(p)
 }
 
@@ -237,9 +237,10 @@ func (t *transport) SetHeartbeatHandler(cb func(rpc raft.RPC)) {
 
 // AppendEntriesPipeline returns an interface that can be used to pipeline
 // AppendEntries requests.
-func (t *transport) AppendEntriesPipeline(target raft.ServerAddress) (raft.AppendPipeline, error) {
+func (t *transport) AppendEntriesPipeline(id raft.ServerID, target raft.ServerAddress) (raft.AppendPipeline, error) {
 	p := &pipeline{
 		t:        t,
+		id:       id,
 		target:   target,
 		work:     make(chan *appendEntry, 100),
 		consumer: make(chan raft.AppendFuture, 100),
@@ -284,13 +285,14 @@ func (e *appendEntry) Respond(err error) {
 type pipeline struct {
 	t        *transport
 	target   raft.ServerAddress
+	id       raft.ServerID
 	work     chan *appendEntry
 	consumer chan raft.AppendFuture
 }
 
 func (p *pipeline) run() {
 	for ap := range p.work {
-		err := p.t.AppendEntries(p.target, ap.req, ap.res)
+		err := p.t.AppendEntries(p.id, p.target, ap.req, ap.res)
 		ap.Respond(err)
 	}
 }
