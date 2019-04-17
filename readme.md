@@ -4,6 +4,20 @@ Inspired by http://colin-scott.github.io/blog/2015/10/07/fuzzing-raft-for-fun-an
 is a framework and set of test scenarios for testing the behavior and correctness of the raft library
 under various conditions.
 
+Currently this is setup to test a particular tag of github.com/hashicorp/raft. If you want to test with an alternative tag or against a in-developement copy of the library the go.mod file can be edited to replace which version of raft is used.
+
+Within the file the replace directive looks like:
+
+```
+replace github.com/hashicorp/raft v1.0.1 => github.com/hashicorp/raft v1.0.0
+```
+
+You can also run something like the following command to make that edit for you:
+
+```
+go mod edit -replace github.com/hashicorp/raft=/local/fs/path/to/raft
+```
+
 ## Framework
 
 The framework allows you to construct multiple node raft clusters, connected by an instrumented transport 
