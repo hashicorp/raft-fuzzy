@@ -11,5 +11,5 @@ require (
 	github.com/hashicorp/raft-boltdb v0.0.0-20171010151810-6e5ba93211ea
 	github.com/pascaldekloe/goe v0.1.0 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
-	golang.org/x/sys v0.0.0-20190416152802-12500544f89f // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
